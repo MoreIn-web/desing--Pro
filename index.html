@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Pro - Upgraded</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif;}
+  body{background:#f0f2f5; overflow:hidden;}
+  
+  /* LOGIN SCREEN */
+  #loginScreen{
+    display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    animation:fadeIn 1s ease;
+  }
+  #loginScreen h1{color:white;font-size:3rem;margin-bottom:20px;}
+  #loginScreen button{padding:14px 28px;font-size:1rem;border:none;border-radius:12px;background:#fff;color:#333; cursor:pointer; transition:0.3s;}
+  #loginScreen button:hover{transform:scale(1.05); background:#e1e1e1;}
+
+  /* DASHBOARD */
+  #dashboard{display:none; height:100vh; width:100vw; flex-direction:column;}
+  #topbar{
+    height:60px; background:#fff; display:flex; align-items:center; justify-content:space-between;
+    padding:0 20px; box-shadow:0 3px 10px rgba(0,0,0,0.1);
+  }
+  #topbar h2{font-size:1.5rem; color:#333;}
+  #topbar button{
+    padding:8px 16px;border:none;border-radius:8px;background:#667eea;color:white;cursor:pointer;transition:0.3s;
+  }
+  #topbar button:hover{background:#5a67d8; transform:scale(1.05);}
+
+  #mainContent{flex:1; display:flex; background:#f0f2f5; justify-content:center; align-items:center; position:relative;}
+
+  /* TOOL PANEL */
+  #tools{
+    width:220px;background:#fff;border-radius:12px;padding:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);display:flex; flex-direction:column; gap:10px; position:absolute; left:20px; top:80px;
+    display:none; /* hidden initially */
+  }
+  #tools h3{margin-bottom:10px; color:#333; font-weight:600;}
+  #tools button{padding:10px; border:none;border-radius:8px;background:#667eea;color:white;cursor:pointer;transition:0.3s; text-align:left;}
+  #tools button:hover{background:#5a67d8; transform:scale(1.05);}
+  #tools select, #tools input[type=color], #tools input[type=range]{margin-bottom:10px;}
+
+  /* CANVAS */
+  #canvasContainer{
+    flex:1; background:#fff; border-radius:12px; overflow:hidden; display:flex; justify-content:center; align-items:center;
+  }
+  canvas{background:white; border-radius:12px; box-shadow:0 5px 20px rgba(0,0,0,0.1);}
+  
+  /* CENTER PLACEHOLDER */
+  #centerPlaceholder{
+    position:absolute; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #centerPlaceholder button{
+    padding:12px 24px; font-size:1.2rem; border:none; border-radius:10px; background:#667eea; color:white; cursor:pointer; transition:0.3s;
+  }
+  #centerPlaceholder button:hover{background:#5a67d8; transform:scale(1.05);}
+
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <h1>Design Pro</h1>
+  <button id="googleSignInBtn">Sign in with Google</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div id="topbar">
+    <h2>Design Pro</h2>
+    <button id="createProjectBtn">Create Project</button>
+  </div>
+  <div id="mainContent">
+    <!-- CENTER PLACEHOLDER -->
+    <div id="centerPlaceholder">
+      <p>Click "Create Project" to start</p>
+    </div>
+    <!-- TOOL PANEL -->
+    <div id="tools">
+      <h3>Tools</h3>
+      <button id="brushTool">Brush</button>
+      <label>Brush Size: <input type="range" id="brushSize" min="1" max="20" value="3"></label>
+      <input type="color" id="brushColor" value="#000000">
+      
+      <button id="pencilTool">Pencil</button>
+      <button id="eraserTool">Eraser</button>
+      
+      <button id="textTool">Text</button>
+      <select id="fontSelect">
+        <option value="Poppins">Poppins</option>
+        <option value="Arial">Arial</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Courier New">Courier New</option>
+      </select>
+      <input type="color" id="textColor" value="#000000">
+      <input type="number" id="fontSize" min="10" max="100" value="30">
+      
+      <button id="imageTool">Add Image</button>
+      <button id="stickerTool">Sticker</button>
+      <button id="removeBG">Remove BG</button>
+      
+      <button id="exportBtn">Export</button>
+    </div>
+    
+    <!-- CANVAS -->
+    <div id="canvasContainer">
+      <canvas id="designCanvas" width="1000" height="600"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  // LOGIN PERSISTENCE
+  const loginScreen = document.getElementById('loginScreen');
+  const dashboard = document.getElementById('dashboard');
+  const googleSignInBtn = document.getElementById('googleSignInBtn');
+  const createProjectBtn = document.getElementById('createProjectBtn');
+  const centerPlaceholder = document.getElementById('centerPlaceholder');
+  const tools = document.getElementById('tools');
+
+  if(localStorage.getItem('loggedIn')==='true'){
+    loginScreen.style.display='none';
+    dashboard.style.display='flex';
+  }
+
+  googleSignInBtn.addEventListener('click', ()=>{
+    localStorage.setItem('loggedIn','true');
+    loginScreen.style.display='none';
+    dashboard.style.display='flex';
+  });
+
+  // CREATE PROJECT
+  createProjectBtn.addEventListener('click', ()=>{
+    const projectName = prompt("Enter Project Name:");
+    if(projectName){
+      alert(`Project "${projectName}" Created!`);
+      centerPlaceholder.style.display='none';
+      tools.style.display='flex';
+      initCanvas();
+    }
+  });
+
+  // CANVAS SETUP
+  const canvas = document.getElementById('designCanvas');
+  const ctx = canvas.getContext('2d');
+  let drawing=false;
+  let currentTool='brush';
+  let brushSize = document.getElementById('brushSize').value;
+  let brushColor = document.getElementById('brushColor').value;
+  let fontSize = document.getElementById('fontSize').value;
+  let fontFamily = document.getElementById('fontSelect').value;
+  let textColor = document.getElementById('textColor').value;
+
+  function initCanvas(){
+    ctx.fillStyle='white';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  // TOOL SELECTION
+  document.getElementById('brushTool').addEventListener('click', ()=>currentTool='brush');
+  document.getElementById('pencilTool').addEventListener('click', ()=>currentTool='pencil');
+  document.getElementById('eraserTool').addEventListener('click', ()=>currentTool='eraser');
+  document.getElementById('textTool').addEventListener('click', ()=>currentTool='text');
+  document.getElementById('imageTool').addEventListener('click', ()=>currentTool='image');
+  document.getElementById('stickerTool').addEventListener('click', ()=>currentTool='sticker');
+  document.getElementById('removeBG').addEventListener('click', ()=>currentTool='removeBG');
+
+  // INPUT LISTENERS
+  document.getElementById('brushSize').addEventListener('input', e=>brushSize=e.target.value);
+  document.getElementById('brushColor').addEventListener('input', e=>brushColor=e.target.value);
+  document.getElementById('fontSize').addEventListener('input', e=>fontSize=e.target.value);
+  document.getElementById('fontSelect').addEventListener('change', e=>fontFamily=e.target.value);
+  document.getElementById('textColor').addEventListener('input', e=>textColor=e.target.value);
+
+  // CANVAS DRAWING
+  canvas.addEventListener('mousedown', e=>{
+    if(currentTool==='brush' || currentTool==='pencil' || currentTool==='eraser'){
+      drawing=true;
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX,e.offsetY);
+    } else if(currentTool==='text'){
+      const txt = prompt('Enter Text:');
+      if(txt){
+        ctx.fillStyle=textColor;
+        ctx.font = `${fontSize}px ${fontFamily}`;
+        ctx.fillText(txt,e.offsetX,e.offsetY);
+      }
+    } else if(currentTool==='image'){
+      const input = document.createElement('input');
+      input.type='file';
+      input.accept='image/*';
+      input.onchange=e=>{
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(evt){
+          const img = new Image();
+          img.onload=()=>ctx.drawImage(img,50,50,300,200);
+          img.src = evt.target.result;
+        }
+        reader.readAsDataURL(file);
+      }
+      input.click();
+    } else if(currentTool==='sticker'){
+      const img = new Image();
+      img.src='https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Emoji_u1F600.svg/1024px-Emoji_u1F600.svg.png'; // sample sticker
+      img.onload=()=>ctx.drawImage(img,100,100,100,100);
+    } else if(currentTool==='removeBG'){
+      alert('Remove BG: Demo works on white areas only');
+      const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+      const data = imgData.data;
+      for(let i=0;i<data.length;i+=4){
+        if(data[i]>200 && data[i+1]>200 && data[i+2]>200){data[i+3]=0;}
+      }
+      ctx.putImageData(imgData,0,0);
+    }
+  });
+
+  canvas.addEventListener('mousemove', e=>{
+    if(drawing){
+      if(currentTool==='brush'){
+        ctx.lineTo(e.offsetX,e.offsetY);
+        ctx.strokeStyle=brushColor;
+        ctx.lineWidth=brushSize;
+        ctx.lineCap='round';
+        ctx.stroke();
+      } else if(currentTool==='pencil'){
+        ctx.lineTo(e.offsetX,e.offsetY);
+        ctx.strokeStyle=brushColor;
+        ctx.lineWidth=1;
+        ctx.stroke();
+      } else if(currentTool==='eraser'){
+        ctx.clearRect(e.offsetX-5,e.offsetY-5,10,10);
+      }
+    }
+  });
+
+  canvas.addEventListener('mouseup', e=>drawing=false);
+
+  // EXPORT
+  document.getElementById('exportBtn').addEventListener('click', ()=>{
+    const link = document.createElement('a');
+    link.download='DesignPro.png';
+    link.href=canvas.toDataURL();
+    link.click();
+  });
+
+</script>
+
+</body>
+</html>
