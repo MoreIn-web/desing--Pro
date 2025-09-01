@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Pro v2.5</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+body,html{width:100%;height:100%;overflow:hidden;}
+button{cursor:pointer;border:none;outline:none;transition:0.3s;}
+
+/* BG animation */
+#welcomeScreen{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#111;z-index:999;overflow:hidden;}
+.particle{position:absolute;width:10px;height:10px;border-radius:50%;background:linear-gradient(45deg,#ff0,#0ff);animation:move 10s linear infinite;opacity:0.6;}
+@keyframes move{0%{transform:translateY(0) translateX(0);}100%{transform:translateY(-1200px) translateX(400px);}}
+
+/* Shine effect */
+@keyframes shine{0%{background-position:-500px;}100%{background-position:500px;}}
+.shine{background:linear-gradient(90deg,#fff,#ff0,#fff);background-size:200%;-webkit-background-clip:text;color:transparent;animation:shine 3s linear infinite;}
+
+/* Welcome */
+#welcomeScreen h2{font-size:2em;margin-bottom:10px;}
+#createProjectBox{padding:20px 50px;background:#222;color:#fff;border-radius:12px;font-size:1.5em;cursor:pointer;transition:0.3s;}
+#createProjectBox:hover{background:#333;transform:scale(1.05);}
+
+/* Sign Screen */
+#signScreen{display:none;flex-direction:column;justify-content:center;align-items:center;height:100vh;background:#111;}
+#signScreen h2{font-size:2em;margin-bottom:20px;}
+#gSignInWrapper{margin-top:20px;}
+
+/* Workspace */
+#workspace{display:none;flex-direction:column;height:100vh;background:#f4f4f4;}
+#topBar{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;background:#222;color:#fff;}
+#topBar h2{font-size:1.5em;}
+#exportBtn{padding:8px 15px;border-radius:6px;background:#0f9d58;color:white;}
+#exportBtn:hover{background:#0b7a43;}
+
+#mainContainer{display:flex;flex:1;}
+#toolsPanel{width:90px;background:#333;display:flex;flex-direction:column;gap:10px;padding:10px;}
+#toolsPanel button{background:#444;color:white;padding:10px;border-radius:6px;}
+#toolsPanel button:hover{background:#555;transform:scale(1.1);}
+#canvasContainer{flex:1;display:flex;justify-content:center;align-items:center;position:relative;}
+canvas{border:2px solid #333;background:white;}
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<div id="welcomeScreen">
+  <h2 class="shine">Welcome to</h2>
+  <div id="createProjectBox" class="shine">Create New Project</div>
+</div>
+
+<!-- SIGN -->
+<div id="signScreen">
+  <h2 class="shine">Sign in with Google</h2>
+  <div id="gSignInWrapper"></div>
+</div>
+
+<!-- WORKSPACE -->
+<div id="workspace">
+  <div id="topBar">
+    <h2>Design Pro</h2>
+    <button id="exportBtn">Export</button>
+  </div>
+  <div id="mainContainer">
+    <div id="toolsPanel">
+      <button id="brushBtn">Brush</button>
+      <button id="eraserBtn">Eraser</button>
+      <button id="textBtn">Text</button>
+      <button id="imgBtn">Image</button>
+      <button id="stickerBtn">Sticker</button>
+      <button id="undoBtn">Undo</button>
+      <button id="redoBtn">Redo</button>
+      <button id="colorBtn">Color</button>
+      <button id="shapeBtn">Shape</button>
+    </div>
+    <div id="canvasContainer">
+      <canvas id="mainCanvas" width="800" height="600"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+const CLIENT_ID="222604044829-bpqusruarmij7944cjpb67sfvaamam16.apps.googleusercontent.com";
+
+let welcomeScreen=document.getElementById('welcomeScreen');
+let createProjectBox=document.getElementById('createProjectBox');
+let signScreen=document.getElementById('signScreen');
+let workspace=document.getElementById('workspace');
+let exportBtn=document.getElementById('exportBtn');
+
+let signedIn=localStorage.getItem('signedIn')==='true';
+
+// Background particles
+for(let i=0;i<30;i++){
+  let p=document.createElement('div');p.classList.add('particle');
+  p.style.left=Math.random()*window.innerWidth+'px';
+  p.style.top=Math.random()*window.innerHeight+'px';
+  p.style.width=5+Math.random()*10+'px';
+  p.style.height=5+Math.random()*10+'px';
+  p.style.animationDuration=(5+Math.random()*10)+'s';
+  welcomeScreen.appendChild(p);
+}
+
+// Click create project
+createProjectBox.onclick=()=>{
+  welcomeScreen.style.display='none';
+  if(signedIn){workspace.style.display='flex';}
+  else{signScreen.style.display='flex';}
+};
+
+// Google Sign-In
+window.onload=function(){
+  google.accounts.id.initialize({
+    client_id:CLIENT_ID,
+    callback:handleCredentialResponse,
+    auto_select:false
+  });
+  google.accounts.id.renderButton(document.getElementById("gSignInWrapper"),{theme:"outline",size:"large"});
+};
+
+function handleCredentialResponse(response){
+  console.log("JWT:",response.credential);
+  localStorage.setItem('signedIn','true');
+  signedIn=true;
+  signScreen.style.display='none';
+  workspace.style.display='flex';
+}
+
+// Export
+const canvas=document.getElementById('mainCanvas');
+const ctx=canvas.getContext('2d');
+exportBtn.onclick=()=>{
+  let link=document.createElement('a');
+  link.download='design.png';
+  link.href=canvas.toDataURL();
+  link.click();
+  workspace.style.display='none';
+  welcomeScreen.style.display='flex';
+};
+
+// Canvas
+let painting=false; let brushColor='#000'; let brushSize=5;
+canvas.addEventListener('mousedown',()=>painting=true);
+canvas.addEventListener('mouseup',()=>painting=false);
+canvas.addEventListener('mousemove',draw);
+function draw(e){ if(!painting)return; const rect=canvas.getBoundingClientRect(); ctx.fillStyle=brushColor; ctx.beginPath(); ctx.arc(e.clientX-rect.left,e.clientY-rect.top,brushSize,0,Math.PI*2); ctx.fill(); }
+
+// Tools
+document.getElementById('brushBtn').onclick=()=>{ brushColor='#000'; brushSize=5; };
+document.getElementById('eraserBtn').onclick=()=>{
+  let size=prompt("Eraser size(5-50):",20);
+  brushColor='#fff'; brushSize=(size && !isNaN(size))?Math.min(Math.max(size,5),50):20;
+};
+document.getElementById('textBtn').onclick=()=>{
+  let text=prompt("Enter text:"); 
+  if(text){ 
+    ctx.fillStyle=brushColor; 
+    ctx.font="20px Arial"; 
+    ctx.fillText(text,100,100); 
+  }
+};
+document.getElementById('imgBtn').onclick=()=>{
+  let imgURL=prompt("Image URL:"); 
+  if(imgURL){ const img=new Image(); img.onload=()=>ctx.drawImage(img,50,50,200,200); img.src=imgURL; }
+};
+document.getElementById('stickerBtn').onclick=()=>{
+  let emoji=prompt("Emoji:"); 
+  if(emoji){ ctx.font="40px Arial"; ctx.fillText(emoji,150,150); }
+};
+document.getElementById('undoBtn').onclick=()=>alert("Undo coming soon!");
+document.getElementById('redoBtn').onclick=()=>alert("Redo coming soon!");
+document.getElementById('colorBtn').onclick=()=>{
+  let color=prompt("Enter color (#hex or name):","#000000");
+  if(color) brushColor=color;
+};
+document.getElementById('shapeBtn').onclick=()=>{
+  let shape=prompt("Shape (rect/circle):");
+  if(shape==='rect'){ ctx.fillStyle=brushColor; ctx.fillRect(100,100,100,60); }
+  if(shape==='circle'){ ctx.fillStyle=brushColor; ctx.beginPath(); ctx.arc(150,150,50,0,Math.PI*2); ctx.fill(); }
+};
+</script>
+</body>
+</html>
