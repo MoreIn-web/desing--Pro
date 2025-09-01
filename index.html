@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Pro v2.3</title>
+<style>
+  /* Basic Reset */
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+  body{overflow-x:hidden;background:#111; color:#fff;}
+
+  /* Animations */
+  @keyframes shineText{
+    0%{background-position:-500px 0;}
+    100%{background-position:500px 0;}
+  }
+  .shine{
+    background: linear-gradient(90deg,#fff,#0ff,#fff);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-size: 1000px;
+    animation: shineText 3s linear infinite;
+  }
+  .fadeIn{animation: fadeIn 1s ease forwards; opacity:0;}
+  @keyframes fadeIn{to{opacity:1;}}
+
+  /* Welcome Screen */
+  #welcomeScreen{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#1a1a1a;z-index:999;}
+  #welcomeScreen h1{font-size:4em;margin-bottom:10px;}
+  #welcomeScreen h2{font-size:2em;margin-bottom:30px;}
+  #startBtn{padding:15px 40px;font-size:1.2em;border:none;border-radius:8px;background:#0ff;color:#111;cursor:pointer;transition:0.3s;}
+  #startBtn:hover{background:#0cc;}
+
+  /* Sign In */
+  #signInScreen{display:none;flex-direction:column;justify-content:center;align-items:center;height:100vh;background:#111;}
+  #signInScreen button{padding:15px 40px;font-size:1.2em;border:none;border-radius:8px;background:#4285F4;color:#fff;cursor:pointer;transition:0.3s;}
+  #signInScreen button:hover{background:#357ae8;}
+  #signInWrapper{margin-top:20px;}
+
+  /* Workspace */
+  #workspace{display:none;flex-direction:column;height:100vh;background:#222;}
+  #topBar{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;background:#111;}
+  #toolsPanel{width:70px;background:#333;padding:10px;display:flex;flex-direction:column;gap:10px;}
+  #toolsPanel button{background:#444;border:none;color:white;padding:8px;border-radius:5px;transition:0.2s;font-size:0.9em;}
+  #toolsPanel button:hover{background:#555;}
+  #canvasContainer{flex:1;display:flex;justify-content:center;align-items:center;position:relative;background:#eee;}
+  canvas{border:2px solid #333;background:white;}
+  .floating{position:absolute;top:10px;right:10px;background:#4285F4;color:white;padding:8px 12px;border-radius:6px;transition:0.3s;}
+  .floating:hover{background:#357ae8;}
+</style>
+</head>
+<body>
+
+<!-- Welcome Screen -->
+<div id="welcomeScreen" class="fadeIn">
+  <h1 class="shine">More in</h1>
+  <h2 class="shine">Design Pro</h2>
+  <button id="startBtn">Let's Start</button>
+</div>
+
+<!-- Sign In Screen -->
+<div id="signInScreen" class="fadeIn center">
+  <h2 class="shine">Sign with Google</h2>
+  <div id="signInWrapper"></div>
+</div>
+
+<!-- Workspace -->
+<div id="workspace">
+  <div id="topBar">
+    <h3 class="shine">Design Pro</h3>
+    <button class="floating" id="exportBtn">Export</button>
+  </div>
+  <div style="display:flex;flex:1;">
+    <div id="toolsPanel">
+      <button id="brushBtn">Brush</button>
+      <button id="eraserBtn">Eraser</button>
+      <button id="textBtn">Text</button>
+      <button id="imgBtn">Add Image</button>
+      <button id="undoBtn">Undo</button>
+      <button id="redoBtn">Redo</button>
+    </div>
+    <div id="canvasContainer" class="center">
+      <canvas id="mainCanvas" width="800" height="600"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Google Sign-In -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+const CLIENT_ID = "222604044829-bpqusruarmij7944cjpb67sfvaamam16.apps.googleusercontent.com";
+let welcomeScreen = document.getElementById('welcomeScreen');
+let signInScreen = document.getElementById('signInScreen');
+let workspace = document.getElementById('workspace');
+let startBtn = document.getElementById('startBtn');
+let exportBtn = document.getElementById('exportBtn');
+
+// Welcome -> Sign In
+startBtn.onclick = () => {
+  welcomeScreen.style.display='none';
+  signInScreen.style.display='flex';
+};
+
+// Initialize Google Sign-In
+window.onload = function(){
+  google.accounts.id.initialize({
+    client_id: CLIENT_ID,
+    callback: handleCredentialResponse,
+    auto_select:false
+  });
+  google.accounts.id.renderButton(
+    document.getElementById("signInWrapper"),
+    { theme:"outline", size:"large" }
+  );
+};
+
+// Google Sign-In callback
+function handleCredentialResponse(response){
+  console.log("JWT:",response.credential);
+  signInScreen.style.display='none';
+  workspace.style.display='flex';
+}
+
+// Canvas setup
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+let painting=false;
+let brushColor='#000';
+let brushSize=5;
+
+canvas.addEventListener('mousedown',()=>painting=true);
+canvas.addEventListener('mouseup',()=>painting=false);
+canvas.addEventListener('mousemove',draw);
+
+function draw(e){
+  if(!painting) return;
+  const rect = canvas.getBoundingClientRect();
+  ctx.fillStyle=brushColor;
+  ctx.beginPath();
+  ctx.arc(e.clientX-rect.left,e.clientY-rect.top,brushSize,0,Math.PI*2);
+  ctx.fill();
+}
+
+// Tool buttons
+document.getElementById('brushBtn').onclick = ()=>{ brushColor='#000'; brushSize=5; };
+document.getElementById('eraserBtn').onclick = ()=>{
+  let size = prompt("Enter eraser size (5-50):",20);
+  brushColor='#fff';
+  brushSize=(size && !isNaN(size)) ? Math.min(Math.max(size,5),50) : 20;
+};
+document.getElementById('textBtn').onclick = ()=>{
+  let text = prompt("Enter text:");
+  if(text){
+    ctx.fillStyle=brushColor;
+    ctx.font="20px Arial";
+    ctx.fillText(text,100,100);
+  }
+};
+document.getElementById('imgBtn').onclick = ()=>{
+  let imgURL = prompt("Enter image URL:");
+  if(imgURL){
+    const img = new Image();
+    img.onload = ()=>ctx.drawImage(img,50,50,200,200);
+    img.src = imgURL;
+  }
+};
+document.getElementById('undoBtn').onclick = ()=>alert("Undo feature coming soon!");
+document.getElementById('redoBtn').onclick = ()=>alert("Redo feature coming soon!");
+
+// Export
+exportBtn.onclick = ()=>{
+  const link=document.createElement('a');
+  link.download='design.png';
+  link.href=canvas.toDataURL();
+  link.click();
+};
+</script>
+
+</body>
+</html>
