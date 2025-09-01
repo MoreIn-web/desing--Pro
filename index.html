@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Pro - Professional Design Application</title>
+<meta name="description" content="Create beautiful designs with our responsive design application. Export your creations as images and collaborate with others.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;overflow-x:hidden;color:#fff;}
+.container{max-width:1200px;margin:0 auto;padding:20px;}
+header{display:flex;justify-content:space-between;align-items:center;padding:15px 0;margin-bottom:30px;}
+.logo{display:flex;align-items:center;gap:10px;font-size:24px;font-weight:700;color:white;}
+.logo-icon{background:white;color:#667eea;width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.main-content{opacity:0;transform:translateY(20px);transition:opacity 0.5s ease,transform 0.5s ease;}
+.main-content.visible{opacity:1;transform:translateY(0);}
+.welcome-screen{background:rgba(255,255,255,0.05);border-radius:20px;padding:40px;text-align:center;position:relative;overflow:hidden;}
+.create-box{background:linear-gradient(135deg,#6e8efb,#a777e3);color:white;padding:25px;border-radius:15px;margin:30px auto;max-width:400px;cursor:pointer;transition:transform 0.3s,box-shadow 0.3s;}
+.create-box:hover{transform:translateY(-5px);box-shadow:0 15px 35px rgba(0,0,0,0.2);}
+.create-box h3{font-size:1.5rem;margin-bottom:10px;}
+.create-box p{font-size:1rem;opacity:0.9;}
+.tools-panel{background:rgba(255,255,255,0.05);border-radius:15px;padding:20px;box-shadow:0 10px 25px rgba(0,0,0,0.1);display:none;flex-direction:column;gap:15px;}
+.tool{background:rgba(255,255,255,0.1);padding:12px;border-radius:10px;text-align:center;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.tool:hover{background:rgba(255,255,255,0.2);transform:translateY(-2px);}
+.tool.active{background:rgba(255,255,255,0.3);}
+.tool i{font-size:20px;}
+.canvas-area{background:rgba(255,255,255,0.05);border-radius:15px;padding:20px;display:none;flex-direction:column;flex-grow:1;}
+.canvas-title{font-size:1.3rem;margin-bottom:15px;color:white;}
+.canvas{background:rgba(255,255,255,0.1);border-radius:10px;border:1px dashed #fff;flex-grow:1;display:flex;align-items:center;justify-content:center;font-size:2rem;color:white;}
+.auth-section{display:none;}
+.animation-bg{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden;z-index:-1;pointer-events:none;}
+.shape{position:absolute;border-radius:50%;opacity:0.1;background:linear-gradient(135deg,#6e8efb,#a777e3);animation:float 15s infinite ease-in-out;}
+.shape:nth-child(1){width:150px;height:150px;top:-50px;left:-50px;animation-delay:0s;}
+.shape:nth-child(2){width:200px;height:200px;bottom:-80px;right:10%;animation-delay:-2s;}
+.shape:nth-child(3){width:100px;height:100px;top:30%;right:-30px;animation-delay:-4s;}
+.shape:nth-child(4){width:120px;height:120px;bottom:20%;left:5%;animation-delay:-6s;}
+.shape:nth-child(5){width:80px;height:80px;top:10%;left:20%;animation-delay:-8s;}
+.shape:nth-child(6){width:160px;height:160px;bottom:10%;right:20%;animation-delay:-10s;}
+@keyframes float{0%,100%{transform:translate(0,0) rotate(0deg);}25%{transform:translate(10px,10px) rotate(5deg);}50%{transform:translate(0,15px) rotate(0deg);}75%{transform:translate(-10px,5px) rotate(-5deg);}}
+@media(max-width:900px){.main-content{grid-template-columns:1fr;}.tools-panel{flex-direction:row;flex-wrap:wrap;gap:10px;}.canvas{font-size:1.5rem;}}
+</style>
+</head>
+<body>
+<div class="animation-bg">
+<div class="shape"></div><div class="shape"></div><div class="shape"></div><div class="shape"></div><div class="shape"></div><div class="shape"></div>
+</div>
+
+<div class="container">
+<header>
+<div class="logo"><div class="logo-icon"><i class="fas fa-pen-nib"></i></div><span>Design Pro</span></div>
+</header>
+
+<div class="main-content" id="main-content">
+<div class="welcome-screen" id="welcome-screen">
+<h1 class="welcome-title">Welcome!</h1>
+<p class="welcome-subtitle">Let's Start</p>
+<div class="create-box" id="create-new-project">
+<h3>Create New Project</h3>
+<p>Start designing now</p>
+</div>
+</div>
+
+<div class="workspace-page" id="workspace-page">
+<div style="display:flex;gap:20px;flex-wrap:wrap;">
+<div class="tools-panel" id="tools-panel">
+<div class="tool" data-tool="brush"><i class="fas fa-paint-brush"></i><span>Brush</span></div>
+<div class="tool" data-tool="eraser"><i class="fas fa-eraser"></i><span>Eraser</span></div>
+<div class="tool" data-tool="color"><i class="fas fa-palette"></i><span>Color</span></div>
+<div class="tool" data-tool="font"><i class="fas fa-font"></i><span>Font</span></div>
+<div class="tool" data-tool="image"><i class="fas fa-image"></i><span>Image</span></div>
+</div>
+<div class="canvas-area" id="canvas-area">
+<h3 class="canvas-title">More in</h3>
+<div class="canvas" id="design-canvas">Your design will appear here</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+// Elements
+const createNewProject=document.getElementById('create-new-project');
+const workspacePage=document.getElementById('workspace-page');
+const mainContent=document.getElementById('main-content');
+const toolsPanel=document.getElementById('tools-panel');
+const canvasArea=document.getElementById('canvas-area');
+const tools=document.querySelectorAll('.tool');
+
+// Initialize
+mainContent.classList.add('visible');
+workspacePage.style.display='none';
+
+// Create Project Click
+createNewProject.addEventListener('click',()=>{
+workspacePage.style.display='flex';
+toolsPanel.style.display='flex';
+canvasArea.style.display='flex';
+document.getElementById('welcome-screen').style.display='none';
+});
+
+// Tool click
+tools.forEach(tool=>{
+tool.addEventListener('click',()=>{
+tools.forEach(t=>t.classList.remove('active'));
+tool.classList.add('active');
+const canvas=document.getElementById('design-canvas');
+canvas.textContent=`${tool.getAttribute('data-tool')} tool selected`;
+});
+});
+</script>
+</body>
+</html>
