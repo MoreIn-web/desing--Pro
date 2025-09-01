@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Pro v2.3</title>
+<style>
+  /* Reset & Basics */
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; }
+  body { background:#111; color:#fff; overflow-x:hidden; }
+  button { cursor:pointer; border:none; outline:none; }
+
+  /* Animations */
+  @keyframes shine { 0% { background-position: -500px; } 100% { background-position: 500px; } }
+  .shine { background: linear-gradient(90deg,#fff,#ff0,#fff); background-size:200%; -webkit-background-clip:text; color:transparent; animation: shine 3s linear infinite; }
+
+  /* Welcome Screen */
+  #welcomeScreen { position:fixed; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#111; z-index:999; transition:1s; }
+  #welcomeScreen h2 { font-size:2em; margin-bottom:10px; }
+  #welcomeScreen h1 { font-size:3.5em; margin-bottom:30px; }
+  #getStarted { padding:15px 40px; font-size:1.2em; border-radius:8px; background:#4285F4; color:#fff; transition:0.3s; }
+  #getStarted:hover { background:#357ae8; }
+
+  /* Sign Screen */
+  #signScreen { display:none; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#111; transition:1s; }
+  #gSignInWrapper { margin-top:20px; }
+
+  /* Workspace */
+  #workspace { display:none; flex-direction:column; height:100vh; transition:1s; }
+  #topBar { display:flex; justify-content:space-between; align-items:center; padding:10px 20px; background:#222; }
+  #topBar h2 { font-size:1.5em; }
+  #exportBtn { padding:8px 15px; border-radius:6px; background:#0f9d58; color:white; transition:0.3s; }
+  #exportBtn:hover { background:#0b7a43; }
+
+  #mainContainer { display:flex; flex:1; }
+  #toolsPanel { width:70px; background:#333; display:flex; flex-direction:column; gap:10px; padding:10px; }
+  #toolsPanel button { background:#444; color:white; padding:10px; border-radius:6px; transition:0.2s; }
+  #toolsPanel button:hover { background:#555; transform:scale(1.1); }
+
+  #canvasContainer { flex:1; display:flex; justify-content:center; align-items:center; background:#eaeaea; position:relative; }
+  canvas { border:2px solid #333; background:white; }
+
+</style>
+</head>
+<body>
+
+<!-- WELCOME SCREEN -->
+<div id="welcomeScreen">
+  <h2 class="shine">More in</h2>
+  <h1 class="shine">Design Pro</h1>
+  <button id="getStarted">Let's Start</button>
+</div>
+
+<!-- SIGN SCREEN -->
+<div id="signScreen">
+  <h2 class="shine">Sign in with Google</h2>
+  <div id="gSignInWrapper"></div>
+</div>
+
+<!-- WORKSPACE -->
+<div id="workspace">
+  <div id="topBar">
+    <h2>Design Pro</h2>
+    <button id="exportBtn">Export</button>
+  </div>
+  <div id="mainContainer">
+    <div id="toolsPanel">
+      <button id="brushBtn">Brush</button>
+      <button id="eraserBtn">Eraser</button>
+      <button id="textBtn">Text</button>
+      <button id="imgBtn">Image</button>
+      <button id="stickerBtn">Sticker</button>
+      <button id="undoBtn">Undo</button>
+      <button id="redoBtn">Redo</button>
+    </div>
+    <div id="canvasContainer">
+      <canvas id="mainCanvas" width="800" height="600"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+  const CLIENT_ID = "222604044829-bpqusruarmij7944cjpb67sfvaamam16.apps.googleusercontent.com";
+
+  let welcomeScreen = document.getElementById('welcomeScreen');
+  let signScreen = document.getElementById('signScreen');
+  let workspace = document.getElementById('workspace');
+  let getStartedBtn = document.getElementById('getStarted');
+  let exportBtn = document.getElementById('exportBtn');
+
+  // Show sign screen after get started
+  getStartedBtn.onclick = () => {
+    welcomeScreen.style.display = 'none';
+    signScreen.style.display = 'flex';
+  };
+
+  // Initialize Google Sign-In
+  window.onload = function() {
+    google.accounts.id.initialize({
+      client_id: CLIENT_ID,
+      callback: handleCredentialResponse,
+      auto_select: false
+    });
+
+    google.accounts.id.renderButton(
+      document.getElementById("gSignInWrapper"),
+      { theme: "outline", size: "large" }
+    );
+  };
+
+  function handleCredentialResponse(response) {
+    console.log("Google JWT:", response.credential);
+    signScreen.style.display = 'none';
+    workspace.style.display = 'flex';
+  }
+
+  // Export canvas
+  exportBtn.onclick = () => {
+    let link = document.createElement('a');
+    link.download = 'design.png';
+    link.href = canvas.toDataURL();
+    link.click();
+    workspace.style.display = 'none';
+    welcomeScreen.style.display = 'flex';
+  };
+
+  // Canvas drawing
+  const canvas = document.getElementById('mainCanvas');
+  const ctx = canvas.getContext('2d');
+  let painting = false;
+  let brushColor = '#000';
+  let brushSize = 5;
+
+  canvas.addEventListener('mousedown', e => painting = true);
+  canvas.addEventListener('mouseup', e => painting = false);
+  canvas.addEventListener('mousemove', draw);
+
+  function draw(e) {
+    if(!painting) return;
+    const rect = canvas.getBoundingClientRect();
+    ctx.fillStyle = brushColor;
+    ctx.beginPath();
+    ctx.arc(e.clientX - rect.left, e.clientY - rect.top, brushSize, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Tool buttons
+  document.getElementById('brushBtn').onclick = () => { brushColor='#000'; brushSize=5; };
+  document.getElementById('eraserBtn').onclick = () => {
+    let size = prompt("Enter eraser size (5-50):", 20);
+    brushColor='#fff'; brushSize = (size && !isNaN(size))?Math.min(Math.max(size,5),50):20;
+  };
+  document.getElementById('textBtn').onclick = () => {
+    let text = prompt("Enter text:");
+    if(text){ ctx.fillStyle=brushColor; ctx.font="20px Arial"; ctx.fillText(text,100,100); }
+  };
+  document.getElementById('imgBtn').onclick = () => {
+    let imgURL = prompt("Enter image URL:");
+    if(imgURL){ const img = new Image(); img.onload = ()=>ctx.drawImage(img,50,50,200,200); img.src=imgURL; }
+  };
+  document.getElementById('stickerBtn').onclick = () => {
+    let emoji = prompt("Enter emoji:");
+    if(emoji){ ctx.font="40px Arial"; ctx.fillText(emoji,150,150); }
+  };
+  document.getElementById('undoBtn').onclick = () => alert("Undo coming soon!");
+  document.getElementById('redoBtn').onclick = () => alert("Redo coming soon!");
+
+</script>
+</body>
+</html>
